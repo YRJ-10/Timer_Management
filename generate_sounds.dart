@@ -1,10 +1,11 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'dart:math';
 
 void main() async {
-  await generateTone('assets/audio/short_beep.wav', 0.5, 800);
-  await generateTone('assets/audio/long_alarm.wav', 2.0, 600);
+  // 1200Hz for short beep (louder and more piercing)
+  await generateTone('assets/audio/short_beep.wav', 0.5, 1200);
+  // 1000Hz and 1500Hz alternating for long alarm could be nice, but simple 1000Hz square wave is also very loud.
+  await generateTone('assets/audio/long_alarm.wav', 2.0, 1000);
   print('Sounds generated.');
 }
 
@@ -50,11 +51,20 @@ Future<void> generateTone(String filename, double duration, double frequency, {i
 
   sink.add(header.buffer.asUint8List());
 
-  // Data
+  // Data (Square Wave instead of Sine for LOUDNESS)
   var data = ByteData(numSamples * 2);
   for (int i = 0; i < numSamples; i++) {
     double t = i / sampleRate;
-    int value = (32767.0 * sin(2.0 * pi * frequency * t)).toInt();
+    // Square wave: if sin(x) > 0 then max amplitude, else min amplitude
+    // Using 0.8 * max amplitude to avoid extreme clipping
+    bool isHigh = (t * frequency) % 1.0 < 0.5;
+    int value = isHigh ? 26000 : -26000;
+    
+    // For long alarm, make it pulse (on/off)
+    if (filename.contains('long') && t % 0.5 > 0.25) {
+      value = 0;
+    }
+
     data.setInt16(i * 2, value, Endian.little);
   }
   
