@@ -2,15 +2,28 @@ import 'dart:io';
 import 'dart:typed_data';
 
 void main() async {
-  // 1200Hz for short beep (louder and more piercing)
-  await generateTone('assets/audio/short_beep.wav', 0.5, 1200);
-  // 1000Hz and 1500Hz alternating for long alarm could be nice, but simple 1000Hz square wave is also very loud.
-  await generateTone('assets/audio/long_alarm.wav', 2.0, 1000);
-  print('Sounds generated.');
+  // 5 short beeps (high pitch - 1500Hz)
+  // Total duration: 5 * (0.15s beep + 0.15s silence) = 1.5s
+  await generatePatternTone('assets/audio/short_beep.wav', 1500, 5, 0.15, 0.15);
+  
+  // 5 long beeps (normal high pitch - 1000Hz)
+  // Total duration: 5 * (0.6s beep + 0.4s silence) = 5.0s
+  await generatePatternTone('assets/audio/long_alarm.wav', 1000, 5, 0.6, 0.4);
+  
+  print('Pattern sounds generated.');
 }
 
-Future<void> generateTone(String filename, double duration, double frequency, {int sampleRate = 44100}) async {
-  int numSamples = (duration * sampleRate).toInt();
+Future<void> generatePatternTone(
+  String filename, 
+  double frequency, 
+  int repeatCount, 
+  double beepDuration, 
+  double silenceDuration, 
+  {int sampleRate = 44100}
+) async {
+  double totalDuration = repeatCount * (beepDuration + silenceDuration);
+  int numSamples = (totalDuration * sampleRate).toInt();
+  
   var file = File(filename);
   var sink = file.openWrite();
 
@@ -51,18 +64,20 @@ Future<void> generateTone(String filename, double duration, double frequency, {i
 
   sink.add(header.buffer.asUint8List());
 
-  // Data (Square Wave instead of Sine for LOUDNESS)
+  // Data
   var data = ByteData(numSamples * 2);
+  double cycleDuration = beepDuration + silenceDuration;
+  
   for (int i = 0; i < numSamples; i++) {
     double t = i / sampleRate;
-    // Square wave: if sin(x) > 0 then max amplitude, else min amplitude
-    // Using 0.8 * max amplitude to avoid extreme clipping
-    bool isHigh = (t * frequency) % 1.0 < 0.5;
-    int value = isHigh ? 26000 : -26000;
+    double currentCycleTime = t % cycleDuration;
     
-    // For long alarm, make it pulse (on/off)
-    if (filename.contains('long') && t % 0.5 > 0.25) {
-      value = 0;
+    int value = 0;
+    // Only play sound during the beepDuration part of the cycle
+    if (currentCycleTime < beepDuration) {
+      // Square wave
+      bool isHigh = (t * frequency) % 1.0 < 0.5;
+      value = isHigh ? 26000 : -26000;
     }
 
     data.setInt16(i * 2, value, Endian.little);
