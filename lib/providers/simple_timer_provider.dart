@@ -11,6 +11,7 @@ class SimpleTimerProvider extends ChangeNotifier {
   int _seconds = 0;
 
   int _remainingSeconds = 0;
+  int _totalSeconds = 0;
   bool _isRunning = false;
   bool _isPaused = false;
   Timer? _timer;
@@ -22,6 +23,12 @@ class SimpleTimerProvider extends ChangeNotifier {
   int get minutes => _minutes;
   int get seconds => _seconds;
   int get remainingSeconds => _remainingSeconds;
+  int get totalSeconds => _totalSeconds;
+  double get progress {
+    if (_totalSeconds == 0) return 0;
+    return 1 - (_remainingSeconds / _totalSeconds);
+  }
+
   bool get isRunning => _isRunning;
   bool get isPaused => _isPaused;
   List<int> get templates => _templates;
@@ -53,7 +60,7 @@ class SimpleTimerProvider extends ChangeNotifier {
     if (_templates.length >= 5) return;
     int totalSec = (h * 3600) + (m * 60) + s;
     if (totalSec == 0 || _templates.contains(totalSec)) return;
-    
+
     _templates.add(totalSec);
     _templates.sort();
     _saveTemplates();
@@ -75,7 +82,7 @@ class SimpleTimerProvider extends ChangeNotifier {
     _seconds = s;
     notifyListeners();
   }
-  
+
   void setTimeFromSeconds(int totalSeconds) {
     if (_isRunning) return;
     _hours = totalSeconds ~/ 3600;
@@ -86,9 +93,10 @@ class SimpleTimerProvider extends ChangeNotifier {
 
   void start() {
     if (_isRunning && !_isPaused) return;
-    
+
     if (!_isRunning) {
-      _remainingSeconds = (_hours * 3600) + (_minutes * 60) + _seconds;
+      _totalSeconds = (_hours * 3600) + (_minutes * 60) + _seconds;
+      _remainingSeconds = _totalSeconds;
       if (_remainingSeconds == 0) return;
     }
 
@@ -120,6 +128,7 @@ class SimpleTimerProvider extends ChangeNotifier {
     _isRunning = false;
     _isPaused = false;
     _remainingSeconds = 0;
+    _totalSeconds = 0;
     WakelockPlus.disable();
     if (playAlarm) {
       AudioService.playLongAlarm();

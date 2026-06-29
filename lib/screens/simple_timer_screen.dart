@@ -12,7 +12,7 @@ class SimpleTimerScreen extends StatelessWidget {
     int h = totalSeconds ~/ 3600;
     int m = (totalSeconds % 3600) ~/ 60;
     int s = totalSeconds % 60;
-    
+
     if (h > 0) {
       return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
     }
@@ -25,7 +25,10 @@ class SimpleTimerScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Add Template', style: TextStyle(color: AppColors.textPrimary)),
+        title: const Text(
+          'Add Template',
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
         content: SizedBox(
           height: 200,
           child: CustomTimePicker(
@@ -40,7 +43,10 @@ class SimpleTimerScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
@@ -55,17 +61,31 @@ class SimpleTimerScreen extends StatelessWidget {
     );
   }
 
-  void _showDeleteDialog(BuildContext context, SimpleTimerProvider provider, int index, int totalSecs) {
+  void _showDeleteDialog(
+    BuildContext context,
+    SimpleTimerProvider provider,
+    int index,
+    int totalSecs,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Delete Template?', style: TextStyle(color: AppColors.textPrimary)),
-        content: Text('Remove template ${_formatTime(totalSecs)}?', style: const TextStyle(color: AppColors.textSecondary)),
+        title: const Text(
+          'Delete Template?',
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
+        content: Text(
+          'Remove template ${_formatTime(totalSecs)}?',
+          style: const TextStyle(color: AppColors.textSecondary),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
@@ -84,7 +104,8 @@ class SimpleTimerScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<SimpleTimerProvider>(
       builder: (context, provider, child) {
-        final bool showCountdown = provider.isRunning || provider.remainingSeconds > 0;
+        final bool showCountdown =
+            provider.isRunning || provider.remainingSeconds > 0;
 
         return LayoutBuilder(
           builder: (context, constraints) {
@@ -98,14 +119,33 @@ class SimpleTimerScreen extends StatelessWidget {
                     children: [
                       const Text('Timer', style: AppStyles.headline),
                       const SizedBox(height: 32),
-                      
+
                       if (showCountdown) ...[
                         // Active Countdown UI
                         Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 64.0),
-                          child: Text(
-                            _formatTime(provider.remainingSeconds),
-                            style: AppStyles.timerTextBig,
+                          padding: const EdgeInsets.symmetric(vertical: 32.0),
+                          child: SizedBox(
+                            width: 280,
+                            height: 280,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                SizedBox.expand(
+                                  child: CircularProgressIndicator(
+                                    value: provider.progress
+                                        .clamp(0, 1)
+                                        .toDouble(),
+                                    strokeWidth: 14,
+                                    backgroundColor: AppColors.surface,
+                                    color: AppColors.secondary,
+                                  ),
+                                ),
+                                Text(
+                                  _formatTime(provider.remainingSeconds),
+                                  style: AppStyles.timerTextBig,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ] else ...[
@@ -117,7 +157,7 @@ class SimpleTimerScreen extends StatelessWidget {
                           },
                         ),
                         const SizedBox(height: 32),
-                        
+
                         // Templates Row
                         Wrap(
                           spacing: 12,
@@ -128,19 +168,35 @@ class SimpleTimerScreen extends StatelessWidget {
                               TemplateChip(
                                 label: _formatTime(provider.templates[i]),
                                 onTap: () {
-                                  provider.setTimeFromSeconds(provider.templates[i]);
+                                  provider.setTimeFromSeconds(
+                                    provider.templates[i],
+                                  );
                                   provider.start();
                                 },
-                                onLongPress: () => _showDeleteDialog(context, provider, i, provider.templates[i]),
+                                onLongPress: () => _showDeleteDialog(
+                                  context,
+                                  provider,
+                                  i,
+                                  provider.templates[i],
+                                ),
                               ),
                             if (provider.templates.length < 5)
                               ActionChip(
-                                label: const Icon(Icons.add, color: AppColors.textPrimary, size: 20),
-                                backgroundColor: AppColors.primary.withValues(alpha: 0.2), // fixed deprecation
-                                onPressed: () => _showAddDialog(context, provider),
+                                label: const Icon(
+                                  Icons.add,
+                                  color: AppColors.textPrimary,
+                                  size: 20,
+                                ),
+                                backgroundColor: AppColors.primary.withValues(
+                                  alpha: 0.2,
+                                ), // fixed deprecation
+                                onPressed: () =>
+                                    _showAddDialog(context, provider),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
-                                  side: const BorderSide(color: AppColors.primary),
+                                  side: const BorderSide(
+                                    color: AppColors.primary,
+                                  ),
                                 ),
                               ),
                           ],
@@ -150,13 +206,16 @@ class SimpleTimerScreen extends StatelessWidget {
                             padding: EdgeInsets.only(top: 8.0),
                             child: Text(
                               'Hold to delete template',
-                              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           ),
                       ],
-                      
+
                       const SizedBox(height: 32),
-                      
+
                       // Controls
                       if (showCountdown) ...[
                         Row(
@@ -173,7 +232,9 @@ class SimpleTimerScreen extends StatelessWidget {
                               },
                               backgroundColor: AppColors.surface,
                               child: Icon(
-                                provider.isPaused ? Icons.play_arrow : Icons.pause,
+                                provider.isPaused
+                                    ? Icons.play_arrow
+                                    : Icons.pause,
                                 color: AppColors.primary,
                                 size: 32,
                               ),
@@ -198,11 +259,15 @@ class SimpleTimerScreen extends StatelessWidget {
                           child: FloatingActionButton(
                             heroTag: 'btn3',
                             onPressed: () {
-                              if (provider.hours > 0 || provider.minutes > 0 || provider.seconds > 0) {
+                              if (provider.hours > 0 ||
+                                  provider.minutes > 0 ||
+                                  provider.seconds > 0) {
                                 provider.start();
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Please select a time')),
+                                  const SnackBar(
+                                    content: Text('Please select a time'),
+                                  ),
                                 );
                               }
                             },

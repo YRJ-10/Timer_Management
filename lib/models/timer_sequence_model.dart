@@ -1,10 +1,12 @@
 class TimerSequenceItem {
   final String id;
+  final String name;
   final int minutes;
   final int seconds;
 
   TimerSequenceItem({
     required this.id,
+    this.name = '',
     required this.minutes,
     required this.seconds,
   });
@@ -13,16 +15,13 @@ class TimerSequenceItem {
 
   // For SharedPreferences
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'minutes': minutes,
-      'seconds': seconds,
-    };
+    return {'id': id, 'name': name, 'minutes': minutes, 'seconds': seconds};
   }
 
   factory TimerSequenceItem.fromJson(Map<String, dynamic> json) {
     return TimerSequenceItem(
       id: json['id'],
+      name: json['name'] ?? '',
       minutes: json['minutes'],
       seconds: json['seconds'],
     );

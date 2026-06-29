@@ -6,9 +6,9 @@ void main() async {
   // Total duration: 5 * (0.15s beep + 0.15s silence) = 1.5s
   await generatePatternTone('assets/audio/short_beep.wav', 1500, 5, 0.15, 0.15);
   
-  // 5 long beeps (normal high pitch - 1000Hz)
-  // Total duration: 5 * (0.6s beep + 0.4s silence) = 5.0s
-  await generatePatternTone('assets/audio/long_alarm.wav', 1000, 5, 0.6, 0.4);
+  // 4 long beeps (lower pitch than short beep - 1000Hz)
+  // Total duration: 4 * (0.6s beep + 0.4s silence) = 4.0s
+  await generatePatternTone('assets/audio/long_alarm.wav', 1000, 4, 0.6, 0.4);
   
   print('Pattern sounds generated.');
 }
