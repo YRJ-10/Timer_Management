@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../core/constants.dart';
-import 'simple_timer_screen.dart';
+
+import '../core/constants.dart';
+import 'dashboard_screen.dart';
 import 'sequence_timer_screen.dart';
+import 'settings_screen.dart';
+import 'simple_timer_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -13,36 +16,51 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const SimpleTimerScreen(),
-    const SequenceTimerScreen(),
-  ];
+  void _setTab(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final screens = [
+      DashboardScreen(onNavigate: _setTab),
+      const SimpleTimerScreen(),
+      const SequenceTimerScreen(),
+      const SettingsScreen(),
+    ];
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: _screens[_currentIndex],
+        child: IndexedStack(index: _currentIndex, children: screens),
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: NavigationBar(
         backgroundColor: AppColors.surface,
-        selectedItemColor: AppColors.secondary,
-        unselectedItemColor: AppColors.textSecondary,
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.timer),
-            label: 'Simple',
+        indicatorColor: AppColors.primary.withValues(alpha: 0.24),
+        selectedIndex: _currentIndex,
+        onDestinationSelected: _setTab,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard),
+            label: 'Home',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.format_list_numbered),
-            label: 'Sequence',
+          NavigationDestination(
+            icon: Icon(Icons.timer_outlined),
+            selectedIcon: Icon(Icons.timer),
+            label: 'Timer',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.repeat),
+            selectedIcon: Icon(Icons.repeat_on),
+            label: 'Routine',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
       ),

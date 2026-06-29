@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:uuid/uuid.dart';
 import '../core/audio_service.dart';
 import '../models/timer_sequence_model.dart';
+import 'session_history_provider.dart';
+import 'settings_provider.dart';
 
 class SequenceTimerProvider extends ChangeNotifier {
   List<TimerSequenceItem> _sequence = [];
@@ -16,6 +19,8 @@ class SequenceTimerProvider extends ChangeNotifier {
   int _currentIndex = 0;
   int _remainingSeconds = 0;
   Timer? _timer;
+  AppSettingsProvider? _settings;
+  SessionHistoryProvider? _history;
 
   List<TimerSequenceItem> get sequence => _sequence;
   bool get isLooping => _isLooping;
@@ -30,8 +35,20 @@ class SequenceTimerProvider extends ChangeNotifier {
     return 1 - (_remainingSeconds / currentTotalSeconds);
   }
 
+  int get totalSequenceSeconds {
+    return _sequence.fold(0, (sum, item) => sum + item.totalSeconds);
+  }
+
   SequenceTimerProvider() {
     _loadSequence();
+  }
+
+  void attachServices(
+    AppSettingsProvider settings,
+    SessionHistoryProvider history,
+  ) {
+    _settings = settings;
+    _history = history;
   }
 
   Future<void> _loadSequence() async {
@@ -131,7 +148,9 @@ class SequenceTimerProvider extends ChangeNotifier {
 
     _isRunning = true;
     _isPaused = false;
-    WakelockPlus.enable();
+    if (_settings?.keepScreenAwake ?? true) {
+      WakelockPlus.enable();
+    }
 
     _runTimer();
     notifyListeners();
@@ -183,7 +202,9 @@ class SequenceTimerProvider extends ChangeNotifier {
     _timer?.cancel();
 
     if (_currentIndex < _sequence.length - 1) {
-      AudioService.playShortBeep();
+      if (_settings?.alarmSoundEnabled ?? true) {
+        AudioService.playShortBeep();
+      }
       _currentIndex++;
       _remainingSeconds = _sequence[_currentIndex].totalSeconds;
       _runTimer();
@@ -191,7 +212,8 @@ class SequenceTimerProvider extends ChangeNotifier {
     } else {
       // Reached the end
       if (_isLooping) {
-        AudioService.playLongAlarm();
+        _recordCompletion();
+        _playCompletionFeedback();
         _currentIndex = 0;
         _remainingSeconds = _sequence[_currentIndex].totalSeconds;
         _runTimer();
@@ -199,6 +221,32 @@ class SequenceTimerProvider extends ChangeNotifier {
       } else {
         stop(playAlarm: true);
       }
+    }
+  }
+
+  void _recordCompletion() {
+    final namedItem = _sequence.firstWhere(
+      (item) => item.name.trim().isNotEmpty,
+      orElse: () => _sequence.first,
+    );
+    final title = namedItem.name.trim().isEmpty
+        ? 'Sequence Timer'
+        : '${namedItem.name.trim()} Routine';
+
+    _history?.addSession(
+      type: 'Sequence',
+      title: title,
+      durationSeconds: totalSequenceSeconds,
+      stepCount: _sequence.length,
+    );
+  }
+
+  void _playCompletionFeedback() {
+    if (_settings?.vibrateOnComplete ?? true) {
+      HapticFeedback.heavyImpact();
+    }
+    if (_settings?.alarmSoundEnabled ?? true) {
+      AudioService.playLongAlarm();
     }
   }
 
@@ -218,7 +266,8 @@ class SequenceTimerProvider extends ChangeNotifier {
     _remainingSeconds = 0;
     WakelockPlus.disable();
     if (playAlarm) {
-      AudioService.playLongAlarm();
+      _recordCompletion();
+      _playCompletionFeedback();
     }
     notifyListeners();
   }

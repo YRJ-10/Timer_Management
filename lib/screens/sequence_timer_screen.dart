@@ -268,58 +268,132 @@ class SequenceTimerScreen extends StatelessWidget {
 
   Widget _buildSetupList(BuildContext context, SequenceTimerProvider provider) {
     if (provider.sequence.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 64.0),
-        child: Center(
-          child: Text(
-            'No timers added yet.\nPress + to add.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textSecondary),
-          ),
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.symmetric(vertical: 32),
+        padding: const EdgeInsets.all(22),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.format_list_numbered,
+                color: AppColors.secondary,
+                size: 34,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Build your first routine',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Create named steps like Work, Rest, Review, or Stretch. You can edit and reorder them anytime.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 18),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
+              onPressed: () => _showAddDialog(context, provider),
+              icon: const Icon(Icons.add),
+              label: const Text('Add First Step'),
+            ),
+          ],
         ),
       );
     }
 
-    return ReorderableListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: provider.sequence.length,
-      onReorder: provider.reorderSequenceItem,
-      itemBuilder: (context, index) {
-        final item = provider.sequence[index];
-        return Card(
-          key: ValueKey(item.id),
-          color: AppColors.surface,
-          child: ListTile(
-            leading: const Icon(
-              Icons.drag_handle,
-              color: AppColors.textSecondary,
-            ),
-            title: Text(
-              _itemTitle(item, index),
-              style: const TextStyle(color: AppColors.textPrimary),
-            ),
-            subtitle: Text(
-              '${item.minutes}m ${item.seconds}s',
-              style: const TextStyle(color: AppColors.textSecondary),
-            ),
-            onTap: () => _showEditDialog(context, provider, item),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit, color: AppColors.secondary),
-                  onPressed: () => _showEditDialog(context, provider, item),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.redAccent),
-                  onPressed: () => provider.removeSequenceItem(item.id),
-                ),
-              ],
-            ),
+    return Column(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.white10),
           ),
-        );
-      },
+          child: Row(
+            children: [
+              const Icon(Icons.drag_handle, color: AppColors.secondary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '${provider.sequence.length} steps • ${_formatTime(provider.totalSequenceSeconds)} total',
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const Text(
+                'Tap to edit',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        ReorderableListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: provider.sequence.length,
+          onReorder: provider.reorderSequenceItem,
+          itemBuilder: (context, index) {
+            final item = provider.sequence[index];
+            return Card(
+              key: ValueKey(item.id),
+              color: AppColors.surface,
+              child: ListTile(
+                leading: const Icon(
+                  Icons.drag_handle,
+                  color: AppColors.textSecondary,
+                ),
+                title: Text(
+                  _itemTitle(item, index),
+                  style: const TextStyle(color: AppColors.textPrimary),
+                ),
+                subtitle: Text(
+                  '${item.minutes}m ${item.seconds}s',
+                  style: const TextStyle(color: AppColors.textSecondary),
+                ),
+                onTap: () => _showEditDialog(context, provider, item),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: AppColors.secondary),
+                      onPressed: () => _showEditDialog(context, provider, item),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.redAccent),
+                      onPressed: () => provider.removeSequenceItem(item.id),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -430,7 +504,7 @@ class SequenceTimerScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text(
-                            'Sequence Timer',
+                            'Routine Timer',
                             style: AppStyles.headline,
                           ),
                           if (!showCountdown)

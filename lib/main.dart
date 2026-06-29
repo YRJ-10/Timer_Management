@@ -1,16 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/constants.dart';
-import 'providers/simple_timer_provider.dart';
+import 'providers/session_history_provider.dart';
 import 'providers/sequence_timer_provider.dart';
+import 'providers/settings_provider.dart';
+import 'providers/simple_timer_provider.dart';
 import 'screens/home_screen.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => SimpleTimerProvider()),
-        ChangeNotifierProvider(create: (_) => SequenceTimerProvider()),
+        ChangeNotifierProvider(create: (_) => AppSettingsProvider()),
+        ChangeNotifierProvider(create: (_) => SessionHistoryProvider()),
+        ChangeNotifierProxyProvider2<
+            AppSettingsProvider,
+            SessionHistoryProvider,
+            SimpleTimerProvider>(
+          create: (_) => SimpleTimerProvider(),
+          update: (_, settings, history, provider) {
+            return provider!..attachServices(settings, history);
+          },
+        ),
+        ChangeNotifierProxyProvider2<
+            AppSettingsProvider,
+            SessionHistoryProvider,
+            SequenceTimerProvider>(
+          create: (_) => SequenceTimerProvider(),
+          update: (_, settings, history, provider) {
+            return provider!..attachServices(settings, history);
+          },
+        ),
       ],
       child: const MyApp(),
     ),

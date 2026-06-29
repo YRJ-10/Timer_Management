@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../core/audio_service.dart';
+import 'session_history_provider.dart';
+import 'settings_provider.dart';
 
 class SimpleTimerProvider extends ChangeNotifier {
   int _hours = 0;
@@ -15,6 +18,8 @@ class SimpleTimerProvider extends ChangeNotifier {
   bool _isRunning = false;
   bool _isPaused = false;
   Timer? _timer;
+  AppSettingsProvider? _settings;
+  SessionHistoryProvider? _history;
 
   // Custom templates list in seconds
   List<int> _templates = [];
@@ -35,6 +40,14 @@ class SimpleTimerProvider extends ChangeNotifier {
 
   SimpleTimerProvider() {
     _loadTemplates();
+  }
+
+  void attachServices(
+    AppSettingsProvider settings,
+    SessionHistoryProvider history,
+  ) {
+    _settings = settings;
+    _history = history;
   }
 
   Future<void> _loadTemplates() async {
@@ -102,7 +115,9 @@ class SimpleTimerProvider extends ChangeNotifier {
 
     _isRunning = true;
     _isPaused = false;
-    WakelockPlus.enable(); // Keep screen on
+    if (_settings?.keepScreenAwake ?? true) {
+      WakelockPlus.enable();
+    }
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_remainingSeconds > 0) {
@@ -127,11 +142,22 @@ class SimpleTimerProvider extends ChangeNotifier {
     _timer?.cancel();
     _isRunning = false;
     _isPaused = false;
+    final completedSeconds = _totalSeconds;
     _remainingSeconds = 0;
     _totalSeconds = 0;
     WakelockPlus.disable();
     if (playAlarm) {
-      AudioService.playLongAlarm();
+      _history?.addSession(
+        type: 'Simple',
+        title: 'Quick Timer',
+        durationSeconds: completedSeconds,
+      );
+      if (_settings?.vibrateOnComplete ?? true) {
+        HapticFeedback.heavyImpact();
+      }
+      if (_settings?.alarmSoundEnabled ?? true) {
+        AudioService.playLongAlarm();
+      }
     }
     notifyListeners();
   }
