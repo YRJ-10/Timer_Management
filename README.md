@@ -1,17 +1,21 @@
-# timer_management
+# Timer Management
 
-A new Flutter project.
+Timer Management adalah aplikasi Flutter untuk mengatur timer cepat, routine timer berurutan, dan riwayat sesi yang selesai.
 
-## Getting Started
+## Fitur
 
-This project is a starting point for a Flutter application.
+- Quick Timer dengan template durasi.
+- Routine Timer dengan step bernama, edit, reorder, loop, previous, dan next.
+- Dashboard untuk melihat total sesi, total waktu, dan riwayat terbaru.
+- Settings untuk alarm sound, vibrate, dan keep screen awake.
+- Data disimpan lokal di perangkat.
 
-A few resources to get you started if this is your first Flutter project:
+## Screenshot
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+| Sample 1 | Sample 2 |
+| --- | --- |
+| ![Sample 1](<sampel (1).png>) | ![Sample 2](<sampel (2).png>) |
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+| Sample 3 | Sample 4 |
+| --- | --- |
+| ![Sample 3](<sampel (3).png>) | ![Sample 4](<sampel (4).png>) |
