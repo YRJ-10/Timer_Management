@@ -320,8 +320,8 @@ class SimpleTimerScreen extends StatelessWidget {
     }
 
     return SizedBox(
-      width: 100,
-      height: 100,
+      width: 72,
+      height: 72,
       child: FloatingActionButton(
         heroTag: 'simple_play',
         onPressed: () {
@@ -337,7 +337,7 @@ class SimpleTimerScreen extends StatelessWidget {
         },
         backgroundColor: AppColors.primary,
         shape: const CircleBorder(),
-        child: const Icon(Icons.play_arrow, color: Colors.white, size: 48),
+        child: const Icon(Icons.play_arrow, color: Colors.white, size: 36),
       ),
     );
   }
@@ -349,31 +349,53 @@ class SimpleTimerScreen extends StatelessWidget {
         final showCountdown =
             provider.isRunning || provider.remainingSeconds > 0;
 
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildHeader(),
-                      const SizedBox(height: 28),
-                      if (showCountdown)
-                        _buildActiveTimer(provider)
-                      else
-                        _buildSetupTimer(context, provider),
-                      const SizedBox(height: 32),
-                      _buildControls(context, provider, showCountdown),
-                      const SizedBox(height: 32),
-                    ],
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 110.0),
+                child: Column(
+                  children: [
+                    _buildHeader(),
+                    const SizedBox(height: 28),
+                    if (showCountdown)
+                      _buildActiveTimer(provider)
+                    else
+                      _buildSetupTimer(context, provider),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 100,
+              child: IgnorePointer(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        AppColors.background.withValues(alpha: 0.0),
+                        AppColors.background.withValues(alpha: 0.85),
+                        AppColors.background,
+                      ],
+                    ),
                   ),
                 ),
               ),
-            );
-          },
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 16,
+              child: Center(
+                child: _buildControls(context, provider, showCountdown),
+              ),
+            ),
+          ],
         );
       },
     );
