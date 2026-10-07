@@ -34,6 +34,244 @@ class SequenceTimerScreen extends StatelessWidget {
     );
   }
 
+  void _showCreateRoutineDialog(
+    BuildContext context,
+    SequenceTimerProvider provider,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) => _RoutineNameDialog(
+        title: 'New Routine',
+        confirmLabel: 'Create',
+        onConfirm: (name) => provider.createRoutine(name),
+      ),
+    );
+  }
+
+  void _showRenameRoutineDialog(
+    BuildContext context,
+    SequenceTimerProvider provider,
+    RoutineProfile routine,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) => _RoutineNameDialog(
+        title: 'Rename Routine',
+        initialValue: routine.name,
+        confirmLabel: 'Save',
+        onConfirm: (name) => provider.renameRoutine(routine.id, name),
+      ),
+    );
+  }
+
+  void _showDeleteRoutineDialog(
+    BuildContext context,
+    SequenceTimerProvider provider,
+    RoutineProfile routine,
+  ) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text(
+          'Delete Routine',
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${routine.name}" and all its steps?',
+          style: const TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () {
+              Navigator.pop(ctx);
+              provider.deleteRoutine(routine.id);
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoutineSelector(
+    BuildContext context,
+    SequenceTimerProvider provider,
+  ) {
+    final currentRoutine = provider.activeRoutine;
+    if (currentRoutine == null) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.bookmark_border_rounded,
+              color: AppColors.secondary,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'ROUTINE PROFILE',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+                DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: provider.activeRoutineId,
+                    isDense: true,
+                    isExpanded: true,
+                    icon: const Icon(
+                      Icons.arrow_drop_down,
+                      color: AppColors.secondary,
+                    ),
+                    dropdownColor: AppColors.surface,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                    items: provider.routines.map((routine) {
+                      return DropdownMenuItem<String>(
+                        value: routine.id,
+                        child: Text(
+                          routine.name,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: routine.id == provider.activeRoutineId
+                                ? AppColors.secondary
+                                : AppColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (newId) {
+                      if (newId != null) {
+                        provider.selectRoutine(newId);
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Add new routine',
+            icon: const Icon(
+              Icons.add_circle_outline,
+              color: AppColors.secondary,
+            ),
+            onPressed: () => _showCreateRoutineDialog(context, provider),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: AppColors.textSecondary),
+            color: AppColors.surface,
+            tooltip: 'Routine options',
+            onSelected: (value) {
+              if (value == 'rename') {
+                _showRenameRoutineDialog(context, provider, currentRoutine);
+              } else if (value == 'duplicate') {
+                provider.duplicateRoutine(currentRoutine.id);
+              } else if (value == 'delete') {
+                _showDeleteRoutineDialog(context, provider, currentRoutine);
+              }
+            },
+            itemBuilder: (ctx) => [
+              const PopupMenuItem(
+                value: 'rename',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.edit_outlined,
+                      size: 20,
+                      color: AppColors.secondary,
+                    ),
+                    SizedBox(width: 10),
+                    Text(
+                      'Rename Routine',
+                      style: TextStyle(color: AppColors.textPrimary),
+                    ),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'duplicate',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.copy_rounded,
+                      size: 20,
+                      color: AppColors.textSecondary,
+                    ),
+                    SizedBox(width: 10),
+                    Text(
+                      'Duplicate',
+                      style: TextStyle(color: AppColors.textPrimary),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'delete',
+                enabled: provider.routines.length > 1,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.delete_outline,
+                      size: 20,
+                      color: provider.routines.length > 1
+                          ? Colors.redAccent
+                          : Colors.grey,
+                    ),
+                    SizedBox(width: 10),
+                    Text(
+                      'Delete Routine',
+                      style: TextStyle(
+                        color: provider.routines.length > 1
+                            ? Colors.redAccent
+                            : Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showAddDialog(BuildContext context, SequenceTimerProvider provider) {
     String selectedName = '';
     int selectedM = 0;
@@ -84,12 +322,12 @@ class SequenceTimerScreen extends StatelessWidget {
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
             onPressed: () {
               if (selectedM > 0 || selectedS > 0) {
+                Navigator.pop(ctx);
                 provider.addSequenceItem(
                   selectedM,
                   selectedS,
                   name: selectedName,
                 );
-                Navigator.pop(ctx);
               }
             },
             child: const Text('Add'),
@@ -104,89 +342,20 @@ class SequenceTimerScreen extends StatelessWidget {
     SequenceTimerProvider provider,
     TimerSequenceItem item,
   ) {
-    final nameController = TextEditingController(text: item.name);
-    final minutesController = TextEditingController(
-      text: item.minutes.toString(),
-    );
-    final secondsController = TextEditingController(
-      text: item.seconds.toString(),
-    );
-
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text(
-          'Edit Timer',
-          style: TextStyle(color: AppColors.textPrimary),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              style: const TextStyle(color: AppColors.textPrimary),
-              decoration: _inputDecoration('Name'),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: minutesController,
-                    keyboardType: TextInputType.number,
-                    style: const TextStyle(color: AppColors.textPrimary),
-                    decoration: _inputDecoration('Minutes'),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextField(
-                    controller: secondsController,
-                    keyboardType: TextInputType.number,
-                    style: const TextStyle(color: AppColors.textPrimary),
-                    decoration: _inputDecoration('Seconds'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            onPressed: () {
-              final minutes = int.tryParse(minutesController.text) ?? 0;
-              final seconds = (int.tryParse(secondsController.text) ?? 0).clamp(
-                0,
-                59,
-              );
-              if (minutes > 0 || seconds > 0) {
-                provider.updateSequenceItem(
-                  item.id,
-                  name: nameController.text,
-                  minutes: minutes,
-                  seconds: seconds,
-                );
-                Navigator.pop(ctx);
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
+      builder: (ctx) => _EditTimerDialog(
+        item: item,
+        onSave: (name, minutes, seconds) {
+          provider.updateSequenceItem(
+            item.id,
+            name: name,
+            minutes: minutes,
+            seconds: seconds,
+          );
+        },
       ),
-    ).whenComplete(() {
-      nameController.dispose();
-      minutesController.dispose();
-      secondsController.dispose();
-    });
+    );
   }
 
   Widget _buildActiveTimer(SequenceTimerProvider provider) {
@@ -194,6 +363,23 @@ class SequenceTimerScreen extends StatelessWidget {
 
     return Column(
       children: [
+        Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: Text(
+            provider.activeRoutineName,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.secondary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
         Text(
           'Step ${provider.currentIndex + 1} of ${provider.sequence.length}',
           style: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
@@ -293,9 +479,10 @@ class SequenceTimerScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Build your first routine',
-              style: TextStyle(
+            Text(
+              '"${provider.activeRoutineName}" is empty',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -526,6 +713,8 @@ class SequenceTimerScreen extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 16),
+                      if (!showCountdown)
+                        _buildRoutineSelector(context, provider),
                       if (showCountdown) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 24.0),
@@ -551,3 +740,222 @@ class SequenceTimerScreen extends StatelessWidget {
     );
   }
 }
+
+class _RoutineNameDialog extends StatefulWidget {
+  final String title;
+  final String? initialValue;
+  final String confirmLabel;
+  final ValueChanged<String> onConfirm;
+
+  const _RoutineNameDialog({
+    required this.title,
+    this.initialValue,
+    required this.confirmLabel,
+    required this.onConfirm,
+  });
+
+  @override
+  State<_RoutineNameDialog> createState() => _RoutineNameDialogState();
+}
+
+class _RoutineNameDialogState extends State<_RoutineNameDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue ?? '');
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final text = _controller.text.trim();
+    if (text.isNotEmpty) {
+      Navigator.of(context).pop();
+      widget.onConfirm(text);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppColors.surface,
+      title: Text(
+        widget.title,
+        style: const TextStyle(color: AppColors.textPrimary),
+      ),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        style: const TextStyle(color: AppColors.textPrimary),
+        textInputAction: TextInputAction.done,
+        onSubmitted: (_) => _submit(),
+        decoration: InputDecoration(
+          labelText: 'Routine Name',
+          hintText: widget.initialValue == null
+              ? 'e.g. HIIT Workout, Pomodoro 50/10'
+              : null,
+          labelStyle: const TextStyle(color: AppColors.textSecondary),
+          hintStyle: const TextStyle(color: AppColors.textSecondary),
+          enabledBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: AppColors.textSecondary),
+          ),
+          focusedBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: AppColors.primary),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+          onPressed: _submit,
+          child: Text(widget.confirmLabel),
+        ),
+      ],
+    );
+  }
+}
+
+class _EditTimerDialog extends StatefulWidget {
+  final TimerSequenceItem item;
+  final void Function(String name, int minutes, int seconds) onSave;
+
+  const _EditTimerDialog({
+    required this.item,
+    required this.onSave,
+  });
+
+  @override
+  State<_EditTimerDialog> createState() => _EditTimerDialogState();
+}
+
+class _EditTimerDialogState extends State<_EditTimerDialog> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _minutesController;
+  late final TextEditingController _secondsController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.item.name);
+    _minutesController =
+        TextEditingController(text: widget.item.minutes.toString());
+    _secondsController =
+        TextEditingController(text: widget.item.seconds.toString());
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _minutesController.dispose();
+    _secondsController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final minutes = int.tryParse(_minutesController.text) ?? 0;
+    final seconds =
+        (int.tryParse(_secondsController.text) ?? 0).clamp(0, 59);
+    if (minutes > 0 || seconds > 0) {
+      Navigator.of(context).pop();
+      widget.onSave(_nameController.text.trim(), minutes, seconds);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppColors.surface,
+      title: const Text(
+        'Edit Timer',
+        style: TextStyle(color: AppColors.textPrimary),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _nameController,
+            style: const TextStyle(color: AppColors.textPrimary),
+            decoration: const InputDecoration(
+              labelText: 'Name',
+              labelStyle: TextStyle(color: AppColors.textSecondary),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: AppColors.textSecondary),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: AppColors.primary),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _minutesController,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: const InputDecoration(
+                    labelText: 'Minutes',
+                    labelStyle: TextStyle(color: AppColors.textSecondary),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.textSecondary),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.primary),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: TextField(
+                  controller: _secondsController,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: const InputDecoration(
+                    labelText: 'Seconds',
+                    labelStyle: TextStyle(color: AppColors.textSecondary),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.textSecondary),
+                    ),
+                    focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.primary),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+          onPressed: _submit,
+          child: const Text('Save'),
+        ),
+      ],
+    );
+  }
+}
+
